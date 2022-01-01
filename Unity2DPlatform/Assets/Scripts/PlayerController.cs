@@ -8,6 +8,11 @@ public class PlayerController : MonoBehaviour
     private float movementInputDirection;
     public float movementSpeed = 10.0f;
     public float groundCheckRadius = 0.1f;
+    public float wallCheckDistance;
+    public float wallSlideSpeed;
+    public float movementForceInAir;
+    public float airDragMultiplier=0.95f;
+    public float variableJumpHeightMultiplier=0.5f;
 
     public int amountOfJumpLeft;
     public int amountOfJump=1;
@@ -15,7 +20,9 @@ public class PlayerController : MonoBehaviour
     private bool IsFacingRight=true;
     private bool IsWalking;
     private bool canJump;
+    public bool IsTouchingWall;
     public bool IsGrounded;
+    public bool IsWallSliding;
 
     private Rigidbody2D rb;
 
@@ -24,6 +31,7 @@ public class PlayerController : MonoBehaviour
     private Animator anim;
 
     public Transform groundedCheck;
+    public Transform wallCheck;
 
     public float JumpForce = 16.0f;
     // Start is called before the first frame update
@@ -41,6 +49,22 @@ public class PlayerController : MonoBehaviour
         CheckMovementDirection();
         UpdateAnimation();
         CheckIfCanJump();
+        CheckIfWallSliding();
+    }
+    private void CheckIfWallSliding()
+    {
+        if (IsTouchingWall&& !IsGrounded && rb.velocity.y < 0)
+        {
+          
+            IsWallSliding = true;
+            
+        }
+        else
+        {
+            
+            IsWallSliding = false;
+            
+        }
     }
     private void FixedUpdate()
     {
@@ -67,6 +91,8 @@ public class PlayerController : MonoBehaviour
     private void CheckSurrounding()
     {
         IsGrounded = Physics2D.OverlapCircle(groundedCheck.position, groundCheckRadius, whatIsGround);
+
+        IsTouchingWall = Physics2D.Raycast(wallCheck.position, transform.right, wallCheckDistance, whatIsGround);
     }
     private void CheckMovementDirection()
     {
@@ -93,6 +119,7 @@ public class PlayerController : MonoBehaviour
         anim.SetBool("IsWalking",IsWalking);
         anim.SetBool("IsGrounded", IsGrounded);
         anim.SetFloat("yVelocity", rb.velocity.y);
+        anim.SetBool("IsWallSliding", IsWallSliding);
     }
 
     private void CheckInput()
@@ -102,6 +129,10 @@ public class PlayerController : MonoBehaviour
         if (Input.GetButtonDown("Jump"))
         {
             Jump();
+        }
+        if (Input.GetButtonUp("Jump"))
+        {
+            rb.velocity=new Vector2(rb.velocity.x, rb.velocity.y*variableJumpHeightMultiplier);
         }
     }
     private void Jump()
@@ -115,11 +146,39 @@ public class PlayerController : MonoBehaviour
 
     private void ApplyMovement()
     {
-        rb.velocity = new Vector2(movementSpeed*movementInputDirection,rb.velocity.y);
+        if (IsGrounded)
+        {
+            rb.velocity = new Vector2(movementSpeed * movementInputDirection, rb.velocity.y);
+        }else if (!IsGrounded&&!IsWallSliding&&movementInputDirection!=0)
+        {
+            Vector2 forceToAdd = new Vector2(movementForceInAir * movementInputDirection, 0);
+            rb.AddForce(forceToAdd);
+            
+            if (Mathf.Abs(rb.velocity.x) > movementSpeed)
+            {
+                rb.velocity=new Vector2(movementSpeed*movementInputDirection,rb.velocity.y);
+            }
+        }else if (!IsGrounded && !IsWallSliding && movementInputDirection == 0)
+        {
+            rb.velocity = new Vector2(rb.velocity.x*airDragMultiplier,rb.velocity.y);
+        }
+        
+
+        if (IsWallSliding)
+        {
+            if (rb.velocity.y < -wallSlideSpeed)
+            {
+                rb.velocity = new Vector2(rb.velocity.x, -wallSlideSpeed);
+            }
+        }
     }
 
     private void Flip()
     {
+        if (!IsWallSliding)
+        {
+
+        }
         IsFacingRight = !IsFacingRight;
         transform.Rotate(0.0f, 180.0f, 0.0f);
     }
@@ -127,5 +186,7 @@ public class PlayerController : MonoBehaviour
     private void OnDrawGizmos()
     {
         Gizmos.DrawWireSphere(groundedCheck.position, groundCheckRadius);
+
+        Gizmos.DrawLine(wallCheck.position, new Vector3(wallCheck.position.x + wallCheckDistance, wallCheck.position.y, wallCheck.position.z));
     }
 }
