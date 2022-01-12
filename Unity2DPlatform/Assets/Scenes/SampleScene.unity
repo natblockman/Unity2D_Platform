@@ -613,7 +613,7 @@ TilemapCollider2D:
   m_Material: {fileID: 0}
   m_IsTrigger: 0
   m_UsedByEffector: 0
-  m_UsedByComposite: 0
+  m_UsedByComposite: 1
   m_Offset: {x: 0, y: 0}
   m_MaximumTileChangeCount: 1000
   m_ExtrusionFactor: 0.00001
@@ -3260,13 +3260,17 @@ MonoBehaviour:
   wallCheckDistance: 0.4
   wallSlideSpeed: 1
   movementForceInAir: 50
-  airDragMultiplier: 0
-  variableJumpHeightMultiplier: 0
+  airDragMultiplier: 0.95
+  variableJumpHeightMultiplier: 0.5
+  wallHopForce: 5
+  wallJumpForce: 7
+  jumpTimerSet: 0.15
+  turnTimerSet: 0.1
+  wallJumpTimerSet: 0.5
+  wallHopDirection: {x: 1, y: 0.5}
+  wallJumpDirection: {x: 1, y: 2}
   amountOfJumpLeft: 2
   amountOfJump: 2
-  IsTouchingWall: 0
-  IsGrounded: 0
-  IsWallSliding: 0
   whatIsGround:
     serializedVersion: 2
     m_Bits: 8
